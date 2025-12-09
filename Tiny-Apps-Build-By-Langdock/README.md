@@ -1,6 +1,6 @@
 # Tiny Apps Built by Langdock
 
-These single-file HTML applications were **fully built by Langdock AI**. No coding required — just describe what you need and Langdock creates it for you.
+These single-file HTML applications were **fully built by Claude Opus in the Langdock Chat**. No coding required — just describe what you need and Langdock creates it for you.
 
 ## How to Use
 
@@ -139,5 +139,6 @@ The resulting HTML files work the same way — download and open in any browser.
 ## License
 
 These apps are provided as examples. Feel free to use, modify, and distribute them.
+
 
 
