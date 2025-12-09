@@ -19,19 +19,11 @@ I work at [Langdock](https://langdock.com) and created this repository to share 
 | **Chat** | Conversational AI interface with model switching, image analysis, web search, and file attachments |
 | **Assistants** | Custom AI chatbots configured with specific instructions, knowledge bases, and tool integrations |
 | **Knowledge Folders** | RAG-powered document retrieval supporting up to 1,000 files with vector search |
-| **Integrations** | 45+ native integrations (Google Workspace, Jira, HubSpot, Slack, etc.) plus a custom integration builder |
+| **Integrations** | 50+ native integrations (Google Workspace, Jira, HubSpot, Slack, etc.) plus a custom integration builder |
 | **Workflows** | Multi-step AI-driven automations with triggers, agents, conditional logic, and integrations |
 | **MCP Support** | Model Context Protocol connections to extend AI capabilities with external tools and services |
 | **API Access** | OpenAI-compatible and Anthropic-compatible endpoints for programmatic access |
 | **Prompt Library** | Save, organize, and share prompts across your workspace |
-
-### Available Models
-
-Langdock is model-agnostic and provides access to leading AI models including:
-- **OpenAI**: GPT-5, GPT-5 mini, GPT-4.1, o3, o4 mini
-- **Anthropic**: Claude Sonnet 4.5, Claude Sonnet 4, Claude Opus 4.5
-- **Google**: Gemini 2.5 Pro, Gemini 2.5 Flash
-- **Others**: Mistral Large, LLaMA 3.3, DeepSeek R1
 
 ---
 
@@ -46,22 +38,6 @@ Single-file HTML applications created entirely by Langdock AI. Just describe wha
 
 **Skills demonstrated:** Using Langdock to generate complete, functional applications from natural language descriptions.
 
----
-
-### 📁 Advanced Examples
-
-#### [Langdock API Examples](./langdock-api-examples/)
-Python code examples for interacting with the Langdock API programmatically:
-- **Streaming Assistant** — Real-time streaming responses from AI assistants
-- **PDF Retrieval** — Extract and work with PDF content via the API
-
-**Skills demonstrated:** API integration, streaming responses, working with assistants programmatically.
-
-#### [Sample API Key MCP Server](./sample-api-key-mcp-server/)
-A template for building your own MCP (Model Context Protocol) server that connects Langdock to external APIs and services with API key authentication.
-
-**Skills demonstrated:** MCP server development, extending Langdock with custom tools.
-
 #### [Webinar Resources](./08-12-2025_Resources_From_Assistant_Webinar/)
 Materials from the Assistant Webinar including:
 - Example assistant configurations
@@ -72,29 +48,15 @@ Materials from the Assistant Webinar including:
 
 ---
 
-## Topics This Repo Will Cover
+### 📁 Advanced Examples
 
-As this repository grows, I plan to add examples for:
+#### [Langdock API Examples](./langdock-api-examples/)
+Python code examples for interacting with the Langdock API programmatically:
+- **Streaming Assistant** — Real-time streaming responses from AI assistants
+- **PDF Retrieval** — Extract and work with PDF content via the API
 
-### Beginner / Everyday Use
-- [ ] Effective prompting techniques
-- [ ] Using custom instructions
-- [ ] Working with the prompt library
-- [ ] File attachments and image analysis
-
-### Intermediate
-- [ ] Building assistants with the PTCF framework (Persona, Task, Context, Format)
-- [ ] Configuring knowledge folders for RAG
-- [ ] Using native integrations (Google, Microsoft, CRMs)
-- [ ] Sharing assistants across workspaces
-
-### Advanced
-- [ ] Custom integration development
-- [ ] Workflow automation with triggers and agents
-- [ ] Building MCP servers for custom tools
-- [ ] API integrations in different programming languages
-- [ ] Bring-your-own-key (BYOK) configurations
-- [ ] Vector database connections
+#### [Sample API Key MCP Server](./sample-api-key-mcp-server/)
+A template for building your own MCP (Model Context Protocol) server that connects Langdock to external APIs and services with API key authentication.
 
 ---
 
