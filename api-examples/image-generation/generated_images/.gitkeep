@@ -1,0 +1,3 @@
+# This file ensures the generated_images folder is tracked by git
+# The actual generated images are ignored via .gitignore
+

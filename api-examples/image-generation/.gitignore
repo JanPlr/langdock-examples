@@ -1,0 +1,18 @@
+# Generated images (keep the folder but ignore its contents)
+generated_images/*
+!generated_images/.gitkeep
+
+# Python virtual environment
+venv/
+
+# Environment variables (contains secrets)
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE files
+.vscode/
+.idea/
+
