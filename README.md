@@ -33,13 +33,13 @@ This repository contains examples for both **simple** everyday use cases and **a
 
 ### 📁 Simple Examples
 
-#### [Tiny Apps Built by Langdock](./tiny-apps-build-by-langdock/)
+#### [Tiny Apps Built by Langdock](./tiny-apps-built-by-langdock/)
 Single-file HTML applications created entirely by Langdock AI. Just describe what you need, and download a working app. Includes PDF tools (compress, merge, split, convert) that run 100% locally in your browser.
 
 **Skills demonstrated:** Using Langdock to generate complete, functional applications from natural language descriptions.
 
-#### [Webinar Resources](./08-12-2025_Resources_From_Assistant_Webinar/)
-Materials from the Assistant Webinar including:
+#### [Webinar Resources](./08-12-2025_resources_from_agents_webinar/)
+Materials from the Agents Webinar including:
 - Example assistant configurations
 - API cloning guides for assistants
 - MCP setup instructions
@@ -50,10 +50,9 @@ Materials from the Assistant Webinar including:
 
 ### 📁 Advanced Examples
 
-#### [Langdock API Examples](./langdock-api-examples/)
+#### [API Examples](./api-examples/)
 Python code examples for interacting with the Langdock API programmatically:
-- **Streaming Assistant** — Real-time streaming responses from AI assistants
-- **PDF Retrieval** — Extract and work with PDF content via the API
+- **[Image Generation](./api-examples/image-generation/)** — Generate images using the Langdock Assistant API with DALL-E 3, GPT Image 1, Flux, and more
 
 #### [Sample API Key MCP Server](./sample-api-key-mcp-server/)
 A template for building your own MCP (Model Context Protocol) server that connects Langdock to external APIs and services with API key authentication.
