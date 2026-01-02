@@ -88,6 +88,27 @@ Extract specific pages from a PDF with visual page selection.
 
 ---
 
+### 🔗 QR Code Generator (`Generate_QR_Code.html`)
+
+Generates branded QR codes with the Langdock logo embedded in the center.
+
+**How it works:**
+- Enter any URL in the input field
+- Click "Generate QR Code" or press Enter
+- The QR code appears with the Langdock logo centered
+- Click "Download QR Code" to save a high-resolution PNG
+
+**Features:**
+- Smart rounded corners on QR modules that merge seamlessly when adjacent
+- Langdock logo with rounded edges centered in the QR code
+- High-resolution export (1184×1184px) for print and digital use
+- Dark mode UI using Langdock brand colors
+- Error correction level H (30%) ensures the code remains scannable with the logo overlay
+
+**Technical details:** Uses [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) to create the QR matrix. Custom canvas rendering draws each module with selective corner rounding—corners are only rounded when they face empty space, creating smooth connected shapes. Display uses 4× scaling for crisp rendering; export generates a 1024px QR code with 80px padding.
+
+---
+
 ## Libraries Used
 
 All apps load these open-source libraries from CDN (content delivery network):
