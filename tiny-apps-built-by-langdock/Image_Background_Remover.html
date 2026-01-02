@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Langdock Background Remover</title>
+    <script type="module">
+        import { AutoModel, AutoProcessor, RawImage, env } from 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.0';
+        
+        env.allowLocalModels = false;
+        
+        let model = null;
+        let processor = null;
+        let isModelLoaded = false;
+        
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const originalImage = document.getElementById('originalImage');
+        const resultCanvas = document.getElementById('resultCanvas');
+        const processBtn = document.getElementById('processBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+        const progressBar = document.getElementById('progressBar');
+        const bgOptions = document.getElementById('bgOptions');
+        const bgColorPicker = document.getElementById('bgColorPicker');
+        const transparentBtn = document.getElementById('transparentBtn');
+        const whiteBtn = document.getElementById('whiteBtn');
+        const customColorBtn = document.getElementById('customColorBtn');
+        
+        let currentImageData = null;
+        let currentMaskData = null;
+        let selectedBgType = 'transparent';
+        let selectedBgColor = '#ffffff';
+        
+        async function loadModel() {
+            showLoading('Loading AI model... This may take a moment on first use.');
+            try {
+                const model_id = 'briaai/RMBG-1.4';
+                
+                model = await AutoModel.from_pretrained(model_id, {
+                    config: { model_type: 'custom' },
+                    progress_callback: (progress) => {
+                        if (progress.status === 'progress') {
+                            const percent = Math.round(progress.progress);
+                            updateProgress(percent);
+                            loadingText.textContent = `Downloading model: ${percent}%`;
+                        }
+                    }
+                });
+                
+                processor = await AutoProcessor.from_pretrained(model_id, {
+                    config: {
+                        do_normalize: true,
+                        do_pad: false,
+                        do_rescale: true,
+                        do_resize: true,
+                        image_mean: [0.5, 0.5, 0.5],
+                        feature_extractor_type: "ImageFeatureExtractor",
+                        image_std: [1, 1, 1],
+                        resample: 2,
+                        rescale_factor: 0.00392156862745098,
+                        size: { width: 1024, height: 1024 },
+                    }
+                });
+                
+                isModelLoaded = true;
+                hideLoading();
+                console.log('Model loaded successfully');
+            } catch (err) {
+                hideLoading();
+                console.error('Model loading error:', err);
+                alert('Failed to load AI model. Please refresh and try again.\n\nError: ' + err.message);
+            }
+        }
+        
+        function showLoading(text) {
+            loadingText.textContent = text;
+            loadingOverlay.classList.add('visible');
+            progressBar.style.width = '0%';
+        }
+        
+        function updateProgress(percent) {
+            progressBar.style.width = percent + '%';
+        }
+        
+        function hideLoading() {
+            loadingOverlay.classList.remove('visible');
+        }
+        
+        function handleFile(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('Please upload an image file');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage.src = e.target.result;
+                originalImage.onload = () => {
+                    previewSection.classList.add('visible');
+                    bgOptions.classList.remove('visible');
+                    downloadBtn.classList.remove('visible');
+                    resultCanvas.style.display = 'none';
+                    document.getElementById('resultPlaceholder').style.display = 'flex';
+                };
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function handleImageFromClipboard(blob) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                originalImage.src = e.target.result;
+                originalImage.onload = () => {
+                    previewSection.classList.add('visible');
+                    bgOptions.classList.remove('visible');
+                    downloadBtn.classList.remove('visible');
+                    resultCanvas.style.display = 'none';
+                    document.getElementById('resultPlaceholder').style.display = 'flex';
+                };
+            };
+            reader.readAsDataURL(blob);
+        }
+        
+        async function processImage() {
+            if (!isModelLoaded) {
+                await loadModel();
+                if (!isModelLoaded) return;
+            }
+            
+            showLoading('Removing background...');
+            updateProgress(20);
+            
+            try {
+                // Load image using RawImage
+                const img = await RawImage.fromURL(originalImage.src);
+                updateProgress(40);
+                
+                // Process image
+                const { pixel_values } = await processor(img);
+                updateProgress(60);
+                
+                // Run model
+                const { output } = await model({ input: pixel_values });
+                updateProgress(80);
+                
+                // Convert output to mask
+                const maskData = (
+                    await RawImage.fromTensor(output[0].mul(255).to('uint8')).resize(img.width, img.height)
+                ).data;
+                
+                // Create canvas for result
+                const canvas = resultCanvas;
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // Draw original image
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = img.width;
+                tempCanvas.height = img.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.drawImage(originalImage, 0, 0, img.width, img.height);
+                
+                const imageData = tempCtx.getImageData(0, 0, img.width, img.height);
+                
+                // Store for later use
+                currentImageData = imageData;
+                currentMaskData = { data: maskData, width: img.width, height: img.height };
+                
+                // Apply transparency
+                applyBackground('transparent');
+                
+                updateProgress(100);
+                hideLoading();
+                
+                // Show result
+                document.getElementById('resultPlaceholder').style.display = 'none';
+                resultCanvas.style.display = 'block';
+                bgOptions.classList.add('visible');
+                downloadBtn.classList.add('visible');
+                
+            } catch (err) {
+                hideLoading();
+                console.error('Processing error:', err);
+                alert('Error processing image. Please try again.\n\nError: ' + err.message);
+            }
+        }
+        
+        function applyBackground(type, color = '#ffffff') {
+            if (!currentImageData || !currentMaskData) return;
+            
+            selectedBgType = type;
+            selectedBgColor = color;
+            
+            const canvas = resultCanvas;
+            const ctx = canvas.getContext('2d');
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (type !== 'transparent') {
+                ctx.fillStyle = color;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            const newImageData = ctx.createImageData(canvas.width, canvas.height);
+            
+            for (let i = 0; i < currentImageData.data.length; i += 4) {
+                const maskIdx = i / 4;
+                const alpha = currentMaskData.data[maskIdx];
+                
+                if (type === 'transparent') {
+                    newImageData.data[i] = currentImageData.data[i];
+                    newImageData.data[i + 1] = currentImageData.data[i + 1];
+                    newImageData.data[i + 2] = currentImageData.data[i + 2];
+                    newImageData.data[i + 3] = alpha;
+                } else {
+                    const bgR = parseInt(color.slice(1, 3), 16);
+                    const bgG = parseInt(color.slice(3, 5), 16);
+                    const bgB = parseInt(color.slice(5, 7), 16);
+                    
+                    const a = alpha / 255;
+                    newImageData.data[i] = Math.round(currentImageData.data[i] * a + bgR * (1 - a));
+                    newImageData.data[i + 1] = Math.round(currentImageData.data[i + 1] * a + bgG * (1 - a));
+                    newImageData.data[i + 2] = Math.round(currentImageData.data[i + 2] * a + bgB * (1 - a));
+                    newImageData.data[i + 3] = 255;
+                }
+            }
+            
+            ctx.putImageData(newImageData, 0, 0);
+            
+            transparentBtn.classList.toggle('active', type === 'transparent');
+            whiteBtn.classList.toggle('active', type === 'color' && color === '#ffffff');
+            customColorBtn.classList.toggle('active', type === 'color' && color !== '#ffffff');
+        }
+        
+        function downloadResult() {
+            const link = document.createElement('a');
+            link.download = 'background-removed.png';
+            link.href = resultCanvas.toDataURL('image/png');
+            link.click();
+        }
+        
+        // File input events
+        dropZone.addEventListener('click', () => fileInput.click());
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const file = e.dataTransfer.files[0];
+            if (file) handleFile(file);
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) handleFile(file);
+        });
+        
+        // Paste event
+        document.addEventListener('paste', (e) => {
+            const items = e.clipboardData?.items;
+            if (!items) return;
+            
+            for (const item of items) {
+                if (item.type.startsWith('image/')) {
+                    e.preventDefault();
+                    const blob = item.getAsFile();
+                    if (blob) {
+                        handleImageFromClipboard(blob);
+                    }
+                    break;
+                }
+            }
+        });
+        
+        processBtn.addEventListener('click', processImage);
+        downloadBtn.addEventListener('click', downloadResult);
+        
+        transparentBtn.addEventListener('click', () => applyBackground('transparent'));
+        whiteBtn.addEventListener('click', () => applyBackground('color', '#ffffff'));
+        customColorBtn.addEventListener('click', () => {
+            bgColorPicker.click();
+        });
+        bgColorPicker.addEventListener('input', (e) => {
+            applyBackground('color', e.target.value);
+        });
+        
+        window.addEventListener('load', loadModel);
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: rgba(18, 20, 32);
+            min-height: 100vh;
+            padding: 20px;
+            color: rgba(243, 243, 244);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: rgba(243, 243, 244);
+        }
+        
+        .subtitle {
+            color: rgba(136, 137, 143);
+            font-size: 1.1rem;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: rgba(79, 70, 229, 0.2);
+            color: #4F46E5;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+        }
+        
+        .drop-zone {
+            background: rgba(30, 32, 43);
+            border: 2px dashed rgba(54, 55, 65);
+            border-radius: 20px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 30px;
+        }
+        
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #4F46E5;
+            background: rgba(42, 44, 54);
+        }
+        
+        .drop-zone-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .drop-zone-text {
+            color: rgba(184, 184, 188);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        
+        .drop-zone-hint {
+            color: rgba(89, 91, 99);
+            font-size: 0.9rem;
+        }
+        
+        .paste-hint {
+            color: #4F46E5;
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+        
+        .paste-hint kbd {
+            background: rgba(79, 70, 229, 0.2);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+        
+        .preview-section {
+            display: none;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .preview-section.visible {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+        
+        @media (max-width: 768px) {
+            .preview-section.visible {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .preview-card {
+            background: rgba(30, 32, 43);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid rgba(54, 55, 65);
+        }
+        
+        .preview-card h3 {
+            color: rgba(184, 184, 188);
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .image-container {
+            background: rgba(42, 44, 54);
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 300px;
+            position: relative;
+        }
+        
+        .image-container img, .image-container canvas {
+            max-width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+        }
+        
+        .checkered-bg {
+            background-image: 
+                linear-gradient(45deg, rgba(54, 55, 65) 25%, transparent 25%),
+                linear-gradient(-45deg, rgba(54, 55, 65) 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, rgba(54, 55, 65) 75%),
+                linear-gradient(-45deg, transparent 75%, rgba(54, 55, 65) 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: rgba(30, 32, 43);
+        }
+        
+        .placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: rgba(89, 91, 99);
+            padding: 40px;
+        }
+        
+        .placeholder-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #5D54E8;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(79, 70, 229, 0.5);
+        }
+        
+        .btn-secondary {
+            background: rgba(65, 67, 77);
+            color: rgba(243, 243, 244);
+            display: none;
+        }
+        
+        .btn-secondary.visible {
+            display: inline-block;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(89, 91, 99);
+        }
+        
+        .bg-options {
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .bg-options.visible {
+            display: flex;
+        }
+        
+        .bg-btn {
+            padding: 10px 16px;
+            background: rgba(42, 44, 54);
+            border: 2px solid rgba(54, 55, 65);
+            color: rgba(184, 184, 188);
+            font-size: 0.9rem;
+        }
+        
+        .bg-btn:hover {
+            border-color: rgba(89, 91, 99);
+        }
+        
+        .bg-btn.active {
+            border-color: #4F46E5;
+            background: rgba(79, 70, 229, 0.1);
+            color: #4F46E5;
+        }
+        
+        .color-picker-wrapper {
+            position: relative;
+        }
+        
+        .color-picker-wrapper input[type="color"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(18, 20, 32, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 1000;
+        }
+        
+        .loading-overlay.visible {
+            display: flex;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(54, 55, 65);
+            border-top-color: #4F46E5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: rgba(184, 184, 188);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        .progress-bar-container {
+            width: 300px;
+            height: 6px;
+            background: rgba(54, 55, 65);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: #4F46E5;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .powered-by {
+            text-align: center;
+            margin-top: 40px;
+            color: rgba(89, 91, 99);
+            font-size: 0.85rem;
+        }
+        
+        .privacy-note {
+            text-align: center;
+            margin-top: 15px;
+            color: rgba(89, 91, 99);
+            font-size: 0.8rem;
+        }
+        
+        .privacy-note span {
+            color: #4F46E5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>✂️ Background Remover</h1>
+            <p class="subtitle">Remove backgrounds from images instantly using AI</p>
+            <span class="badge">🔒 100% Private - Runs in your browser</span>
+        </header>
+        
+        <div class="drop-zone" id="dropZone">
+            <div class="drop-zone-icon">📷</div>
+            <p class="drop-zone-text">Drop an image here or click to upload</p>
+            <p class="drop-zone-hint">Supports JPG, PNG, WebP</p>
+            <p class="paste-hint">Or press <kbd>Ctrl</kbd> + <kbd>V</kbd> to paste from clipboard</p>
+            <input type="file" id="fileInput" accept="image/*" hidden>
+        </div>
+        
+        <div class="preview-section" id="previewSection">
+            <div class="preview-card">
+                <h3>Original</h3>
+                <div class="image-container">
+                    <img id="originalImage" alt="Original image">
+                </div>
+            </div>
+            <div class="preview-card">
+                <h3>Result</h3>
+                <div class="image-container checkered-bg">
+                    <div class="placeholder" id="resultPlaceholder">
+                        <div class="placeholder-icon">🖼️</div>
+                        <p>Click "Remove Background" to process</p>
+                    </div>
+                    <canvas id="resultCanvas" style="display: none;"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-options" id="bgOptions">
+            <button class="bg-btn active" id="transparentBtn">Transparent</button>
+            <button class="bg-btn" id="whiteBtn">White</button>
+            <div class="color-picker-wrapper">
+                <button class="bg-btn" id="customColorBtn">Custom Color</button>
+                <input type="color" id="bgColorPicker" value="#ffffff">
+            </div>
+        </div>
+        
+        <div class="actions">
+            <button class="btn-primary" id="processBtn">Remove Background</button>
+            <button class="btn-secondary" id="downloadBtn">Download PNG</button>
+        </div>
+        
+        <p class="privacy-note">
+            <span>🛡️</span> Your images never leave your device. All processing happens locally in your browser.
+        </p>
+        
+        <p class="powered-by">Powered by Langdock</p>
+    </div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text" id="loadingText">Loading AI model...</p>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+</body>
+</html>

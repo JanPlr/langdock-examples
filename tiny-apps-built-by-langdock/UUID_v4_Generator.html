@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UUID v4 Generator</title>
+    <style>
+        :root {
+            --bg-primary: rgba(18, 20, 32);
+            --bg-card: rgba(30, 32, 43);
+            --bg-elevated: rgba(42, 44, 54);
+            --border: rgba(54, 55, 65);
+            --text-primary: rgba(243, 243, 244);
+            --text-secondary: rgba(184, 184, 188);
+            --text-muted: rgba(89, 91, 99);
+            --accent: #4F46E5;
+            --accent-hover: #5D54E8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 16px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .button-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+        }
+
+        .uuid-container {
+            background: var(--bg-primary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            min-height: 320px;
+        }
+
+        .uuid-list {
+            list-style: none;
+        }
+
+        .uuid-item {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.95rem;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            background: var(--bg-card);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .uuid-item:hover {
+            border-color: var(--accent);
+            background: var(--bg-elevated);
+        }
+
+        .uuid-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .uuid-text {
+            user-select: all;
+        }
+
+        .copy-icon {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .uuid-item:hover .copy-icon {
+            opacity: 1;
+        }
+
+        .uuid-item.copied {
+            border-color: #10B981;
+        }
+
+        .uuid-item.copied .copy-icon {
+            opacity: 1;
+            color: #10B981;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 280px;
+            color: var(--text-muted);
+        }
+
+        .empty-state svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            border-color: #10B981;
+        }
+
+        footer {
+            margin-top: auto;
+            padding-top: 40px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .privacy-note {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .button-row {
+                flex-direction: column;
+            }
+
+            .uuid-item {
+                font-size: 0.8rem;
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔑 UUID v4 Generator</h1>
+            <p class="subtitle">Generate random UUIDs instantly</p>
+            <span class="badge">🔒 100% Private - Runs in your browser</span>
+        </header>
+
+        <div class="card">
+            <div class="button-row">
+                <button class="btn-primary" id="generateBtn">Generate 10 UUIDs</button>
+                <button class="btn-secondary" id="copyAllBtn">📋 Copy All</button>
+            </div>
+
+            <div class="uuid-container">
+                <div class="empty-state" id="emptyState">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                    </svg>
+                    <p>Click "Generate 10 UUIDs" to start</p>
+                </div>
+                <ul class="uuid-list" id="uuidList"></ul>
+            </div>
+        </div>
+
+        <p class="privacy-note">🛡️ Your data never leaves your device. UUIDs are generated using the Web Crypto API.</p>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <footer>
+        Powered by Langdock
+    </footer>
+
+    <script type="module">
+        const generateBtn = document.getElementById('generateBtn');
+        const copyAllBtn = document.getElementById('copyAllBtn');
+        const uuidList = document.getElementById('uuidList');
+        const emptyState = document.getElementById('emptyState');
+        const toast = document.getElementById('toast');
+
+        let currentUUIDs = [];
+
+        function generateUUIDv4() {
+            // Use crypto.randomUUID() if available, otherwise fallback
+            if (crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            // Fallback for older browsers
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = crypto.getRandomValues(new Uint8Array(1))[0] % 16;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function showToast(message, type = '') {
+            toast.textContent = message;
+            toast.className = 'toast' + (type ? ' ' + type : '');
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        function generateUUIDs() {
+            currentUUIDs = [];
+            uuidList.innerHTML = '';
+            emptyState.style.display = 'none';
+
+            for (let i = 0; i < 10; i++) {
+                const uuid = generateUUIDv4();
+                currentUUIDs.push(uuid);
+
+                const li = document.createElement('li');
+                li.className = 'uuid-item';
+                li.innerHTML = `
+                    <span class="uuid-text">${uuid}</span>
+                    <span class="copy-icon">Click to copy</span>
+                `;
+                li.addEventListener('click', () => copyToClipboard(uuid, li));
+                uuidList.appendChild(li);
+            }
+        }
+
+        async function copyToClipboard(text, element = null) {
+            try {
+                await navigator.clipboard.writeText(text);
+                if (element) {
+                    element.classList.add('copied');
+                    const icon = element.querySelector('.copy-icon');
+                    icon.textContent = '✓ Copied!';
+                    setTimeout(() => {
+                        element.classList.remove('copied');
+                        icon.textContent = 'Click to copy';
+                    }, 1500);
+                }
+                showToast('Copied to clipboard!', 'success');
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                showToast('Failed to copy. Try selecting manually.');
+            }
+        }
+
+        function copyAllUUIDs() {
+            if (currentUUIDs.length === 0) {
+                showToast('Generate UUIDs first!');
+                return;
+            }
+            // Join with newlines for Google Sheets paste (each UUID = new row)
+            const allUUIDs = currentUUIDs.join('\n');
+            copyToClipboard(allUUIDs);
+        }
+
+        generateBtn.addEventListener('click', generateUUIDs);
+        copyAllBtn.addEventListener('click', copyAllUUIDs);
+
+        // Generate on page load
+        generateUUIDs();
+    </script>
+</body>
+</html>

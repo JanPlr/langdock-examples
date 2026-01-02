@@ -8,6 +8,8 @@ These single-file HTML applications were **fully built by Claude Opus in the Lan
 2. **Open** the file directly in your web browser (double-click or drag into browser)
 3. **Done!** The app runs immediately — no installation, no server, no setup
 
+*Note: An internet connection is required the first time you open an app to load the necessary libraries from CDN.*
+
 ## Privacy & Security
 
 **Your files never leave your device.** All processing happens directly in your browser using JavaScript. No data is uploaded to any server. You can verify this by:
@@ -55,7 +57,7 @@ Converts images and documents between different formats.
 - Click "Convert" — each file is processed and a download button appears
 - For PDFs with multiple pages, each page is exported as a separate image
 
-**Technical details:** Uses HTML Canvas API for image-to-image conversions (the file is drawn onto an invisible canvas, then exported in the new format). PDF operations use pdf.js and jsPDF.
+**Technical details:** Uses HTML Canvas API for image-to-image conversions. PDF operations use [pdf.js](https://mozilla.github.io/pdf.js/) and [jsPDF](https://github.com/parallax/jsPDF).
 
 ---
 
@@ -69,7 +71,7 @@ Combines multiple PDF files into a single document.
 - Click "Merge PDFs"
 - Download your combined document
 
-**Technical details:** Each page from every PDF is rendered at high resolution, then assembled into a new PDF in your specified order. Page counts are shown for each file so you know exactly what you're merging.
+**Technical details:** Uses [pdf.js](https://mozilla.github.io/pdf.js/) to render pages and [jsPDF](https://github.com/parallax/jsPDF) to assemble the new PDF. Page counts are shown for each file so you know exactly what you're merging.
 
 ---
 
@@ -84,7 +86,7 @@ Extract specific pages from a PDF with visual page selection.
 - Use "Select All", "Clear", or "Invert" buttons for quick selection
 - Click "Extract Selected Pages" to create a new PDF with only your chosen pages
 
-**Technical details:** Generates thumbnail previews at 50% scale for fast loading, then renders selected pages at full quality for the output PDF.
+**Technical details:** Uses [pdf.js](https://mozilla.github.io/pdf.js/) for reading and previews, [jsPDF](https://github.com/parallax/jsPDF) for creating the output, and [JSZip](https://stuk.github.io/jszip/) for internal handling. Generates thumbnail previews at 50% scale for fast loading.
 
 ---
 
@@ -109,15 +111,30 @@ Generates branded QR codes with the Langdock logo embedded in the center.
 
 ---
 
-## Libraries Used
+### 🔑 UUID v4 Generator (`UUID_v4_Generator.html`)
 
-All apps load these open-source libraries from CDN (content delivery network):
+Generates random UUIDs (version 4) instantly in your browser.
 
-- **[pdf.js](https://mozilla.github.io/pdf.js/)** — Mozilla's PDF rendering library (reads PDF files)
-- **[jsPDF](https://github.com/parallax/jsPDF)** — Creates PDF files from JavaScript
-- **[JSZip](https://stuk.github.io/jszip/)** — Used in Split PDF for handling zip operations
+**How it works:**
+- Click "Generate 10 UUIDs" to create a fresh batch
+- Click any individual UUID to copy it to your clipboard
+- Use "Copy All" to copy the entire list (formatted for easy pasting into spreadsheets)
 
-The libraries are loaded when you open the HTML file, so you need an internet connection the first time. After that, your browser may cache them.
+**Technical details:** Uses the browser's built-in `crypto.randomUUID()` API for cryptographically secure random number generation. Zero external dependencies.
+
+---
+
+### ✂️ Image Background Remover (`Image_Background_Remover.html`)
+
+Remove backgrounds from images instantly using AI.
+
+**How it works:**
+- Drop an image or paste from clipboard
+- Click "Remove Background" to process locally in your browser
+- Choose a background (Transparent, White, or Custom Color)
+- Download the result as a PNG
+
+**Technical details:** Uses [Hugging Face Transformers.js](https://huggingface.co/docs/transformers.js) to run the [RMBG-1.4](https://huggingface.co/briaai/RMBG-1.4) model directly in the browser. No data is uploaded to any server.
 
 ---
 
